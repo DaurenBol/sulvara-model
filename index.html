@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sulvara Prospera — Финансовая модель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --navy:#0A1628;--navy2:#111E35;--navy3:#162440;--navy4:#1D2F4F;
+  --teal:#00C4E0;--gold:#F5C842;--green:#1DB87A;--red:#E84040;
+  --muted:#4A6280;--text:#E8EDF5;--text2:#8BA4C0;--text3:#4A6280;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--navy);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:210px;min-width:210px;background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:22px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-badge{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.logo-name{font-size:14px;font-weight:600;line-height:1.3}
+.logo-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.nav{padding:10px 0;flex:1}
+.nav-sec{padding:12px 18px 3px;font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;color:var(--text2);font-size:12.5px;border-left:2px solid transparent;transition:.15s;user-select:none}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--teal);border-left-color:var(--teal);background:rgba(0,196,224,.06)}
+.nav-item svg{flex-shrink:0;opacity:.6}.nav-item.active svg{opacity:1}
+.nav-item.dds-nav{color:var(--green)}.nav-item.dds-nav.active{color:var(--green);border-left-color:var(--green);background:rgba(29,184,122,.06)}
+.sb-foot{padding:12px 18px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono)}
+.mode-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;cursor:pointer;transition:.15s;border:1px solid}
+.mode-pill.auto{background:rgba(0,196,224,.12);color:var(--teal);border-color:rgba(0,196,224,.3)}
+.mode-pill.manual{background:rgba(245,200,66,.12);color:var(--gold);border-color:rgba(245,200,66,.3)}
+.mode-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* TOPBAR */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:50px;background:var(--navy2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:10}
+.page-title{font-size:13px;font-weight:500}
+.sync-badge{display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);color:var(--green);background:rgba(29,184,122,.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(29,184,122,.22)}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-right{margin-left:auto;display:flex;gap:8px}
+.kpi-pill{font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:4px;border:1px solid var(--border2);color:var(--text2)}
+.kpi-pill b{color:var(--teal)}
+
+/* CONTENT */
+.content{padding:22px 24px;flex:1}
+.panel{display:none}.panel.active{display:block}
+.ph{margin-bottom:18px}.ph h1{font-size:19px;font-weight:500;margin-bottom:3px}.ph p{font-size:12px;color:var(--text2)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px;margin-bottom:20px}
+.kc{background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:13px 14px;position:relative;overflow:hidden;transition:.18s}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--teal))}
+.kc:hover{transform:translateY(-1px);border-color:var(--border2)}
+.kc-label{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.kc-val{font-size:21px;font-weight:500;color:var(--ac,var(--teal));font-family:var(--mono);line-height:1}
+.kc-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.kc.g{--ac:var(--green)}.kc.a{--ac:var(--gold)}.kc.r{--ac:var(--red)}.kc.w{--ac:var(--text2)}
+
+/* CHARTS */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.cb{background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:14px}
+.cb.full{grid-column:1/-1}
+.ct{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.cw{position:relative;width:100%;height:195px}
+.cw.tall{height:255px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:7px}
+.leg span{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.lsq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* TABLES */
+.tb{background:var(--navy3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.tb table{width:100%;border-collapse:collapse;font-size:12.5px}
+.tb th{padding:8px 11px;font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;text-align:right;border-bottom:1px solid var(--border);background:var(--navy4);white-space:nowrap}
+.tb th:first-child{text-align:left}
+.tb td{padding:7px 11px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2);font-family:var(--mono);font-size:12px}
+.tb td:first-child{text-align:left;color:var(--text2);font-family:var(--font);font-size:12.5px}
+.tb tr:last-child td{border:none}
+.tb tr.tot td{background:var(--navy4);color:var(--text);font-weight:500;border-top:1px solid var(--border2)}
+.tb tr.sh td{background:var(--navy4);color:var(--text3);font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;padding:5px 11px}
+.tb tr.hi td{color:var(--text);font-weight:500}
+.neg{color:var(--red)!important}.pos{color:var(--green)!important}
+
+/* INPUTS */
+.isec{margin-bottom:18px}
+.isec h3{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:11px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:11px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.field .frow{display:flex;align-items:center;gap:7px}
+.field input[type=range]{flex:1;height:3px;-webkit-appearance:none;background:var(--border2);border-radius:2px;outline:none;cursor:pointer}
+.field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--teal);cursor:pointer}
+.field .fval{font-size:11px;font-family:var(--mono);color:var(--teal);min-width:66px;text-align:right}
+
+/* DDS FORM */
+.dds-tb{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap}
+.tgg{display:flex;background:var(--navy4);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.tgb{padding:5px 13px;font-size:12px;cursor:pointer;color:var(--text2);border:none;background:none;font-family:var(--font);transition:.15s}
+.tgb.active{background:var(--teal);color:var(--navy);font-weight:600}
+.breset{padding:5px 11px;font-size:11px;background:none;border:1px solid var(--border2);color:var(--text2);border-radius:6px;cursor:pointer;transition:.15s}
+.breset:hover{border-color:var(--teal);color:var(--teal)}
+.dnote{font-size:11px;color:var(--text2);background:var(--navy4);border:1px solid var(--border);border-left:3px solid var(--teal);padding:7px 11px;border-radius:0 6px 6px 0;margin-bottom:12px;font-family:var(--mono)}
+.dds-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.dds-tbl th{padding:7px 9px;font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.06em;text-align:right;border-bottom:1px solid var(--border);background:var(--navy4);white-space:nowrap}
+.dds-tbl th:first-child{text-align:left}
+.dds-tbl td{padding:5px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dds-tbl td:first-child{color:var(--text2);font-size:12px}
+.dds-tbl td:not(:first-child){text-align:right}
+.dds-tbl tr.dsec td{background:var(--navy4);font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:5px 9px}
+.dds-tbl tr.dtot td{background:var(--navy4);font-weight:500;color:var(--text);border-top:1px solid var(--border2)}
+.dds-tbl tr.dfcf td{background:rgba(0,196,224,.07);border-top:2px solid var(--teal);font-weight:500}
+.dds-tbl tr.dfcf td:first-child{color:var(--teal);font-size:13px}
+.dds-tbl tr.dcum td{background:var(--navy4)}
+.hint{font-size:10px;color:var(--text3);display:block;margin-top:1px}
+.cv{font-family:var(--mono);font-size:12px;text-align:right}
+.ni{width:100%;padding:3px 6px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:12px;text-align:right;outline:none;transition:.15s}
+.ni:focus{border-color:var(--teal);background:rgba(0,196,224,.06)}
+.ni::placeholder{color:var(--text3)}
+.ni.ov{border-color:var(--gold);color:var(--gold)}
+
+/* SCENARIOS */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px}
+.sc-card{background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:15px;border-top:3px solid var(--sc-c)}
+.sc-name{font-size:13px;font-weight:500;color:var(--sc-c);margin-bottom:3px}
+.sc-sub{font-size:10px;color:var(--text3);margin-bottom:11px;font-family:var(--mono)}
+.sc-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.sc-row:last-child{border:none}
+.sc-key{color:var(--text3)}.sc-val{font-family:var(--mono);font-weight:500;color:var(--sc-c)}
+
+/* FORMULA LIST */
+.fl-row{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.fl-row:last-child{border:none}
+.fl-name{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--teal)}
+.fl-formula{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--navy4);padding:3px 8px;border-radius:4px}
+.fl-val{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
+
+/* ROADMAP — interactive */
+.rm-track{position:relative;padding-left:38px}
+.rm-track::before{content:'';position:absolute;left:13px;top:0;bottom:20px;width:2px;background:var(--border2)}
+.rm-phase{position:relative;margin-bottom:28px}
+.rm-dot{position:absolute;left:-32px;top:5px;width:20px;height:20px;border-radius:50%;
+  background:var(--navy4);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-family:var(--mono);font-weight:600;color:var(--text3);line-height:1}
+.rm-dot.done{background:var(--green);border-color:var(--green);color:var(--navy)}
+.rm-dot.wip{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.rm-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rm-tag{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:4px;border:1px solid;flex-shrink:0}
+.rm-tag.done{color:var(--green);border-color:rgba(29,184,122,.3);background:rgba(29,184,122,.08)}
+.rm-tag.wip{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.08)}
+.rm-tag.plan{color:var(--text3);border-color:var(--border);background:var(--navy4)}
+.rm-tag.overdue{color:var(--red);border-color:rgba(232,64,64,.3);background:rgba(232,64,64,.08)}
+.rm-inline-inp{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:12px;padding:2px 4px;border-radius:3px;transition:.15s;min-width:60px}
+.rm-inline-inp:hover,.rm-inline-inp:focus{background:rgba(255,255,255,.06);border:none;outline:none}
+.rm-period-inp{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:500;max-width:100px}
+.rm-title-inp{font-size:13px;font-weight:500;flex:1;min-width:140px}
+.rm-tasks-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.rm-task-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--navy3);border:1px solid var(--border);border-radius:7px;transition:.15s}
+.rm-task-row:hover{border-color:var(--border2)}
+.rm-task-row.task-done{opacity:.65}
+.rm-task-row.task-overdue{border-color:rgba(232,64,64,.25);background:rgba(232,64,64,.04)}
+.rm-checkbox{flex-shrink:0;position:relative;width:18px;height:18px;cursor:pointer;margin-top:1px}
+.rm-checkbox input{position:absolute;opacity:0;width:0;height:0}
+.rm-checkmark{position:absolute;inset:0;border:2px solid var(--border2);border-radius:4px;background:transparent;transition:.15s;display:flex;align-items:center;justify-content:center}
+.rm-checkbox input:checked ~ .rm-checkmark{background:var(--green);border-color:var(--green)}
+.rm-checkmark::after{content:'✓';font-size:11px;color:var(--navy);font-weight:700;display:none}
+.rm-checkbox input:checked ~ .rm-checkmark::after{display:block}
+.rm-task-content{flex:1;min-width:0}
+.rm-task-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.rm-name-inp{font-size:12px;font-weight:500;flex:1;min-width:120px}
+.rm-deadline-badge{font-size:10px;font-family:var(--mono);flex-shrink:0;white-space:nowrap}
+.rm-del-btn{flex-shrink:0;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;opacity:0;transition:.15s}
+.rm-task-row:hover .rm-del-btn{opacity:1}
+.rm-task-meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rm-note-inp{font-size:11px;color:var(--text3);flex:1;min-width:140px}
+.rm-date-inp{background:var(--navy4);border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;padding:2px 6px;font-family:var(--mono);cursor:pointer;outline:none}
+.rm-date-inp:focus{border-color:var(--teal)}
+.rm-priority-badge{font-size:10px;font-family:var(--mono);font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.rm-responsible-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;padding:7px 10px;background:rgba(255,255,255,.03);border-radius:5px;border:1px solid var(--border)}
+.rm-resp-icon{font-size:13px;flex-shrink:0;opacity:.6}
+.rm-resp-name{font-size:12px;font-weight:500;color:var(--text);min-width:120px;flex:1.5}
+.rm-resp-pos{font-size:11px;color:var(--text2);min-width:100px;flex:1;font-style:italic}
+.rm-resp-phone{font-size:11px;color:var(--teal);min-width:120px;flex:1;font-family:var(--mono)}
+.rm-call-btn{font-size:14px;text-decoration:none;flex-shrink:0;cursor:pointer;opacity:.7;transition:.15s}
+.rm-call-btn:hover{opacity:1}
+.rm-select{background:var(--navy4);border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-size:11px;padding:2px 6px;font-family:var(--mono);cursor:pointer;outline:none}
+.rm-select:focus{border-color:var(--teal)}
+.rm-pr-critical .rm-task-content{border-left:3px solid var(--red);padding-left:8px}
+.rm-pr-high .rm-task-content{border-left:3px solid var(--gold);padding-left:8px}
+.rm-pr-medium .rm-task-content{border-left:3px solid var(--teal);padding-left:8px}
+.rm-pr-low .rm-task-content{border-left:3px solid var(--border2);padding-left:8px}
+/* HR */
+.hr-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:18px}
+.hr-block{background:var(--navy3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.hr-block-head{background:var(--navy4);padding:8px 14px;display:flex;justify-content:space-between;align-items:center}
+.hr-block-name{font-size:12px;font-weight:500;color:var(--teal)}
+.hr-block-count{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.hr-row{display:grid;grid-template-columns:1fr 90px 90px 60px;gap:0;border-bottom:1px solid var(--border)}
+.hr-row:last-child{border:none}
+.hr-row div{padding:7px 14px;font-size:12px}
+.hr-row div:not(:first-child){font-family:var(--mono);text-align:right;color:var(--text2)}
+.hr-row.header div{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--navy4)}
+/* RISK MATRIX */
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.risk-matrix-wrap{background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:14px}
+.matrix-title{font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em}
+.heatmap{display:grid;grid-template-columns:32px repeat(5,1fr);gap:3px}
+.hm-cell{height:34px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--mono);font-weight:500}
+.hm-label{font-size:9px;color:var(--text3);text-align:center;display:flex;align-items:center;justify-content:center}
+.hm-1{background:rgba(29,184,122,.15);color:var(--green)}
+.hm-2{background:rgba(29,184,122,.25);color:var(--green)}
+.hm-3{background:rgba(245,200,66,.2);color:var(--gold)}
+.hm-4{background:rgba(232,64,64,.2);color:var(--red)}
+.hm-5{background:rgba(232,64,64,.35);color:var(--red)}
+.hm-x{background:rgba(232,64,64,.5);color:var(--red);font-weight:700}
+.hm-badge{background:rgba(0,196,224,.15);color:var(--teal);font-size:9px;border-radius:3px;padding:0 3px}
+.risk-list{display:flex;flex-direction:column;gap:8px}
+.risk-item{background:var(--navy3);border:1px solid var(--border);border-radius:6px;padding:10px 12px}
+.risk-item-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.risk-num{font-family:var(--mono);font-size:11px;font-weight:500;min-width:22px;color:var(--text3)}
+.risk-name{font-size:12px;font-weight:500;flex:1}
+.risk-score{font-family:var(--mono);font-size:13px;font-weight:700;min-width:28px;text-align:right}
+.risk-score.hi{color:var(--red)}.risk-score.med{color:var(--gold)}.risk-score.lo{color:var(--green)}
+.risk-detail{font-size:11px;color:var(--text3);margin-bottom:4px}
+.risk-mit{font-size:11px;color:var(--text2);border-left:2px solid var(--border2);padding-left:8px}
+.risk-bar{height:3px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:2px}
+@media(max-width:768px){
+  .sidebar{display:none}.cg{grid-template-columns:1fr}.sc-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}.content{padding:14px}.topbar{padding:0 14px}
+  .risk-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-badge">H&#8322;SO&#8324; Plant</div>
+    <div class="logo-name">Sulvara Prospera</div>
+    <div class="logo-sub">Финансовая модель v3</div>
+  </div>
+  <div class="nav">
+    <div class="nav-sec">Обзор</div>
+    <div class="nav-item active" onclick="sw('dashboard')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Дашборд
+    </div>
+    <div class="nav-item" onclick="sw('assumptions')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2zm0 3h8v1.5H2zm0 3h10v1.5H2z"/></svg>Допущения
+    </div>
+    <div class="nav-sec">Финансы</div>
+    <div class="nav-item" onclick="sw('pl')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm1 3v1h8V5H4zm0 3v1h8V8H4zm0 3v1h5v-1H4z"/></svg>P&amp;L
+    </div>
+    <div class="nav-item dds-nav" onclick="sw('dds')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4v3.44l2.28 2.28-1.06 1.06L7.25 9V5h1.5z"/></svg>ДДС — ввод данных
+    </div>
+    <div class="nav-item" onclick="sw('cashflow')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1 11l4-4 3 3 4-5 3 2V13H1z"/></svg>ДДС таблица
+    </div>
+    <div class="nav-sec">Управление</div>
+    <div class="nav-item" onclick="sw('roadmap')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v2H1zm2 4h10v1.5H3zm2 3.5h6v1.5H5z"/></svg>Дорожная карта
+    </div>
+    <div class="nav-item" onclick="sw('hr')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2.2-5 5-5s5 2 5 5"/><circle cx="12" cy="5" r="2"/><path d="M10 13c.2-1.5 1.2-2.5 2-2.5"/></svg>HR &amp; Персонал
+    </div>
+    <div class="nav-item" onclick="sw('risks')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 14h14L8 1zm0 3l4.5 8h-9L8 4zm-.75 3v2.5h1.5V7h-1.5zm0 3.5v1.5h1.5v-1.5h-1.5z"/></svg>Матрица рисков
+    </div>
+    <div class="nav-sec">Анализ</div>
+    <div class="nav-item" onclick="sw('metrics')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>NPV / IRR
+    </div>
+    <div class="nav-item" onclick="sw('scenarios')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M2 12l3-6 3 4 2-3 4 5H2z"/></svg>Сценарии
+    </div>
+    <div class="nav-item" onclick="sw('sensitivity')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1 8h14M4 4l-3 4 3 4M12 4l3 4-3 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Чувствительность
+    </div>
+  </div>
+  <div class="sb-foot">
+    <div style="margin-bottom:6px">Режим ДДС</div>
+    <div id="mode-pill" class="mode-pill auto" onclick="toggleMode()">
+      <div class="mode-dot"></div><span id="mode-label">Авто</span>
+    </div>
+    <div style="margin-top:9px">Курс: <span style="color:var(--teal)" id="kurs-badge">500</span> тг/$</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Дашборд</div>
+    <div class="sync-badge"><div class="sdot"></div>Синхронизировано</div>
+    <div class="topbar-right">
+      <div class="kpi-pill">IRR <b id="tb-irr">—</b></div>
+      <div class="kpi-pill">NPV <b id="tb-npv">—</b></div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="ph"><h1>Ключевые показатели</h1><p>ТОО «Sulvara Prospera» · Завод H&#8322;SO&#8324; · 20 000 т/год · Туркестанская обл.</p></div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="cg">
+        <div class="cb"><div class="ct">Выручка и EBITDA по годам, млн тг</div>
+          <div class="leg"><span><span class="lsq" style="background:var(--teal)"></span>Выручка</span><span><span class="lsq" style="background:var(--green)"></span>EBITDA</span></div>
+          <div class="cw"><canvas id="c-rev"></canvas></div></div>
+        <div class="cb"><div class="ct">Накопленный FCF, млн тг</div>
+          <div class="leg"><span><span class="lsq" style="background:var(--red)"></span>Отриц.</span><span><span class="lsq" style="background:var(--green)"></span>Полож.</span></div>
+          <div class="cw"><canvas id="c-cumfcf"></canvas></div></div>
+        <div class="cb"><div class="ct">Структура OPEX 2028, млн тг</div>
+          <div class="leg" id="pie-leg"></div><div class="cw"><canvas id="c-pie"></canvas></div></div>
+        <div class="cb"><div class="ct">Себестоимость 1 тонны, тг/т</div>
+          <div class="leg"><span><span class="lsq" style="background:var(--gold)"></span>Переменные</span><span><span class="lsq" style="background:var(--teal)"></span>Постоянные</span><span><span class="lsq" style="background:var(--muted)"></span>Аморт.</span></div>
+          <div class="cw"><canvas id="c-se"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ASSUMPTIONS -->
+    <div id="panel-assumptions" class="panel">
+      <div class="ph"><h1>Допущения</h1><p>Единственный раздел с редактируемыми параметрами — все остальные разделы пересчитываются автоматически</p></div>
+      <div class="isec"><h3>Макроэкономика</h3><div class="igrid" id="inp-macro"></div></div>
+      <div class="isec"><h3>Производство и загрузка</h3><div class="igrid" id="inp-prod"></div></div>
+      <div class="isec"><h3>Цены</h3><div class="igrid" id="inp-prices"></div></div>
+      <div class="isec"><h3>CAPEX и постоянные затраты</h3><div class="igrid" id="inp-costs"></div></div>
+    </div>
+
+    <!-- P&L -->
+    <div id="panel-pl" class="panel">
+      <div class="ph"><h1>P&amp;L — Отчёт о прибылях и убытках</h1><p>Выручка → EBITDA → EBIT → КПН → Чистая прибыль</p></div>
+      <div class="tb"><table id="pl-table"></table></div>
+    </div>
+
+    <!-- DDS INPUT -->
+    <div id="panel-dds" class="panel">
+      <div class="ph"><h1>ДДС — Ввод данных</h1><p>Введите фактические или прогнозные значения в млн тг. Пустые ячейки = авто-расчёт из модели.</p></div>
+      <div class="dds-tb">
+        <div class="tgg">
+          <button class="tgb active" id="btn-auto" onclick="setMode('auto')">Авто (из модели)</button>
+          <button class="tgb" id="btn-manual" onclick="setMode('manual')">Ручной ввод</button>
+        </div>
+        <button class="breset" onclick="resetDDS()">&#x21BA; Сбросить</button>
+        <div class="sync-badge"><div class="sdot"></div>NPV пересчитывается в реальном времени</div>
+      </div>
+      <div id="dds-note" class="dnote">Режим <strong>Авто</strong>: значения рассчитываются из Допущений. Переключитесь в Ручной ввод для ввода фактических данных.</div>
+      <div class="tb" style="overflow-x:auto"><table class="dds-tbl" id="dds-table"></table></div>
+      <div class="cg" style="margin-top:14px">
+        <div class="cb"><div class="ct">FCF по годам + накопленный итог, млн тг</div>
+          <div class="leg"><span><span class="lsq" style="background:var(--teal)"></span>FCF год</span><span><span class="lsq" style="background:var(--green)"></span>Накопл.</span></div>
+          <div class="cw"><canvas id="c-dds-fcf"></canvas></div></div>
+        <div class="cb"><div class="ct">Структура потоков 2028, млн тг</div>
+          <div class="cw"><canvas id="c-dds-struct"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- CASHFLOW TABLE -->
+    <div id="panel-cashflow" class="panel">
+      <div class="ph"><h1>ДДС — Полная таблица</h1><p>Детализация движения денежных средств по всем категориям</p></div>
+      <div class="tb" style="overflow-x:auto"><table id="cf-table"></table></div>
+    </div>
+
+    <!-- METRICS -->
+    <div id="panel-metrics" class="panel">
+      <div class="ph"><h1>Инвестиционные показатели</h1><p>NPV, IRR, срок окупаемости, PI, BEP</p></div>
+      <div class="kpi-grid" id="metrics-kpi"></div>
+      <div class="cb"><div class="ct">Формулы расчёта</div><div id="fl-list"></div></div>
+    </div>
+
+    <!-- SCENARIOS -->
+    <div id="panel-scenarios" class="panel">
+      <div class="ph"><h1>Сценарный анализ</h1><p>Стресс / Базовый / Оптимистичный — сравнение ключевых показателей</p></div>
+      <div class="sc-grid" id="sc-grid"></div>
+      <div class="cg">
+        <div class="cb"><div class="ct">EBITDA по сценариям, млн тг</div>
+          <div class="leg"><span><span class="lsq" style="background:var(--red)"></span>Стресс</span><span><span class="lsq" style="background:var(--teal)"></span>Базовый</span><span><span class="lsq" style="background:var(--green)"></span>Оптимист.</span></div>
+          <div class="cw tall"><canvas id="c-sc"></canvas></div></div>
+        <div class="cb"><div class="ct">NPV по сценариям, млн тг</div>
+          <div class="cw tall"><canvas id="c-sc-npv"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- SENSITIVITY -->
+    <div id="panel-sensitivity" class="panel">
+      <div class="ph"><h1>Анализ чувствительности</h1><p>Влияние изменения ключевых параметров на чистую прибыль (год 3) при ±20%</p></div>
+      <div class="cb" style="margin-bottom:14px"><div class="ct">Торнадо-диаграмма, ∆ Чистая прибыль, млн тг</div>
+        <div class="leg"><span><span class="lsq" style="background:var(--green)"></span>+20%</span><span><span class="lsq" style="background:var(--red)"></span>-20%</span></div>
+        <div class="cw tall"><canvas id="c-tornado"></canvas></div></div>
+      <div class="cg">
+        <div class="cb"><div class="ct">Точка безубыточности</div><div id="bep-content"></div></div>
+        <div class="cb"><div class="ct">Прибыль по уровням загрузки, млн тг</div><div class="cw"><canvas id="c-bep"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div id="panel-roadmap" class="panel">
+      <div class="ph"><h1>Дорожная карта проекта</h1><p>Этапы реализации · Q3 2025 — Q4 2026 · Завод H₂SO₄ 20 000 т/год</p></div>
+      <div id="roadmap-content"></div>
+    </div>
+
+    <!-- HR -->
+    <div id="panel-hr" class="panel">
+      <div class="ph"><h1>HR &amp; Кадровый план</h1><p>30 должностей · 6 функциональных блоков · ФОТ ~84 млн тг/год</p></div>
+      <div id="hr-content"></div>
+    </div>
+
+    <!-- RISKS -->
+    <div id="panel-risks" class="panel">
+      <div class="ph"><h1>Матрица рисков</h1><p>12 ключевых рисков · Оценка Вероятность × Воздействие · Меры митигации</p></div>
+      <div id="risks-content"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const MLN=1e6,YRS=['2026','2027','2028','2029','2030'];
+const charts={};let ddsMode='auto';
+const A={kurs:500,wacc:0.18,inf:0.08,mosh:20000,load:[0.5,0.8,1.0,1.0,1.0],
+  ph2:150000,ih2:0.05,psera:20000,isera:0.06,pel:25,iel:0.07,pvoda:80,pteplo:3000,vteplo:50000,
+  rsera:0.3306,rel:350,rvoda:3.6,capex:2200,amort:115,fot:83.8,nrabot:0.115,
+  to:20,strah:11,adm:17.5,ecol:5,nimush:16.8,zeml:1,okhrana:11.2,kpn:0.20};
+const ROWS=[
+  {k:'receipts',l:'Поступления от реализации',h:'Выручка × 1,12 (НДС включён)',g:'op'},
+  {k:'suppliers',l:'Платежи поставщикам',h:'OPEX переменные + постоянные',g:'op'},
+  {k:'fot_pay',l:'Выплаты персоналу',h:'ФОТ с нагрузкой работодателя',g:'op'},
+  {k:'kpn_pay',l:'КПН уплаченный',h:'= P&L строка КПН',g:'op'},
+  {k:'other_op',l:'Прочие операционные',h:'Доп. поступления / выплаты',g:'op'},
+  {k:'capex_fl',l:'CAPEX',h:'Единовременно в 2025',g:'inv'},
+  {k:'wc',l:'Изменение оборотного капитала',h:'Рост NWC = отток',g:'inv'},
+  {k:'fin_in',l:'Финансирование получено',h:'Кредиты, займы',g:'fin'},
+  {k:'fin_out',l:'Финансирование выплачено',h:'Погашение, дивиденды',g:'fin'},
+];
+const ov={};ROWS.forEach(r=>{ov[r.k]=[null,null,null,null,null];});
+
+function cm(a){
+  const vol=YRS.map((_,i)=>a.mosh*a.load[i]);
+  const ph2y=YRS.map((_,i)=>a.ph2*Math.pow(1+a.ih2,i));
+  const psy=YRS.map((_,i)=>a.psera*Math.pow(1+a.isera,i));
+  const pey=YRS.map((_,i)=>a.pel*Math.pow(1+a.iel,i));
+  const rH2=YRS.map((_,i)=>vol[i]*ph2y[i]);
+  const rHt=YRS.map((_,i)=>i===0?0:a.vteplo*a.load[i]*a.pteplo);
+  const rev=YRS.map((_,i)=>rH2[i]+rHt[i]);
+  const vS=YRS.map((_,i)=>vol[i]*a.rsera*psy[i]);
+  const vE=YRS.map((_,i)=>vol[i]*a.rel*pey[i]);
+  const vW=YRS.map((_,i)=>vol[i]*a.rvoda*a.pvoda);
+  const vT=YRS.map((_,i)=>vS[i]+vE[i]+vW[i]+vol[i]*1000);
+  const fF=YRS.map((_,i)=>(a.fot*MLN)*(1+a.nrabot)*Math.pow(1+a.inf,i));
+  const fT=YRS.map((_,i)=>fF[i]+(a.to+a.strah+a.ecol+a.zeml)*MLN+a.adm*MLN*Math.pow(1+a.inf,i)+a.nimush*MLN*(1-0.05*i)+a.okhrana*MLN*Math.pow(1+a.inf,i));
+  const am=YRS.map(()=>a.amort*MLN);
+  const oc=YRS.map((_,i)=>vT[i]+fT[i]);
+  const eb=YRS.map((_,i)=>rev[i]-oc[i]);
+  const et=YRS.map((_,i)=>eb[i]-am[i]);
+  const kp=YRS.map((_,i)=>Math.max(et[i]*a.kpn,0));
+  const np=YRS.map((_,i)=>et[i]-kp[i]);
+  return{vol,rev,rH2,rHt,vS,vE,vW,vT,fF,fT,am,oc,eb,et,kp,np,ph2y,psy,pey};
+}
+function autoFlows(m){
+  return{receipts:m.rev.map(v=>v*1.12/MLN),suppliers:m.oc.map(v=>-v/MLN),
+    fot_pay:m.fF.map(v=>-v/MLN),kpn_pay:m.kp.map(v=>-v/MLN),other_op:YRS.map(()=>0),
+    capex_fl:YRS.map(()=>0),wc:[0,-50,-80,-20,-20],fin_in:YRS.map(()=>0),fin_out:YRS.map(()=>0)};
+}
+function flows(){
+  const m=cm(A),au=autoFlows(m);const r={};
+  ROWS.forEach(row=>{r[row.k]=YRS.map((_,i)=>ddsMode==='manual'&&ov[row.k][i]!==null?ov[row.k][i]:au[row.k][i]);});
+  r._c25=-A.capex;return r;
+}
+function fcfCalc(f){
+  const op=YRS.map((_,i)=>f.receipts[i]+f.suppliers[i]+f.fot_pay[i]+f.kpn_pay[i]+f.other_op[i]);
+  const iv=YRS.map((_,i)=>f.capex_fl[i]+f.wc[i]);
+  const fn=YRS.map((_,i)=>f.fin_in[i]+f.fin_out[i]);
+  const fcf=YRS.map((_,i)=>op[i]+iv[i]+fn[i]);
+  return{op,iv,fn,fcf,all:[f._c25,...fcf]};
+}
+function irr(fl,g=0.5){let r=g;for(let i=0;i<1500;i++){const f=fl.reduce((s,v,t)=>s+v/Math.pow(1+r,t),0),d=fl.reduce((s,v,t)=>t===0?s:s-t*v/Math.pow(1+r,t+1),0);if(Math.abs(d)<1e-14)break;const n=r-f/d;if(Math.abs(n-r)<1e-10){r=n;break;}r=isNaN(n)?g:n;}return r;}
+function npvC(rate,fl){return fl.reduce((s,v,t)=>s+v/Math.pow(1+rate,t),0);}
+function fmt(n,d=0){if(isNaN(n)||n===null)return'—';return n.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtM(n){return fmt(Math.round(n/MLN),0)+' млн';}
+function fmtP(n){return(n*100).toFixed(1)+'%';}
+function fmtR(n){return fmt(Math.round(n),0);}
+function mkC(id,type,data,opts={}){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id);if(!ctx)return;
+  const grid={color:'rgba(255,255,255,.06)'};const tick={color:'#4A6280'};
+  charts[id]=new Chart(ctx,{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:tick,grid:grid},y:{ticks:tick,grid:grid}},...opts}});
+}
+
+function getMetrics(){
+  const f=flows();const{all,fcf}=fcfCalc(f);
+  const allTg=all.map(v=>v*MLN);
+  const NPV=npvC(A.wacc,allTg),IRR=irr(allTg),PI=1+NPV/(A.capex*MLN);
+  let pp=null,cum=allTg[0];
+  fcf.forEach((v,i)=>{cum+=v*MLN;if(cum>=0&&pp===null)pp=i+1+(cum-v*MLN)/(v*MLN)*(-1);});
+  return{NPV,IRR,PI,pp};
+}
+function renderBar(){
+  const{NPV,IRR}=getMetrics();
+  document.getElementById('tb-irr').textContent=fmtP(IRR);
+  document.getElementById('tb-npv').textContent=fmt(Math.round(NPV/MLN))+' млн';
+  document.getElementById('kurs-badge').textContent=A.kurs;
+}
+
+function sw(id){
+  const tt={dashboard:'Дашборд',assumptions:'Допущения',pl:'P&L',dds:'ДДС — Ввод данных',cashflow:'ДДС — Таблица',metrics:'NPV / IRR',scenarios:'Сценарии',sensitivity:'Чувствительность',roadmap:'Дорожная карта',hr:'HR & Персонал',risks:'Матрица рисков'};
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.getAttribute('onclick').includes("'"+id+"'")));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+id));
+  document.getElementById('page-title').textContent=tt[id]||id;renderAll();
+}
+function setMode(m){
+  ddsMode=m;
+  document.getElementById('btn-auto').classList.toggle('active',m==='auto');
+  document.getElementById('btn-manual').classList.toggle('active',m==='manual');
+  document.getElementById('mode-pill').className='mode-pill '+m;
+  document.getElementById('mode-label').textContent=m==='auto'?'Авто':'Ручной';
+  document.getElementById('dds-note').innerHTML=m==='auto'
+    ?'Режим <strong>Авто</strong>: значения рассчитываются из Допущений. Переключитесь в Ручной ввод для ввода данных.'
+    :'Режим <strong>Ручной ввод</strong>: введите значения в млн тг. Пустое поле = авто-расчёт (показан серым). Изменения сразу обновляют NPV/IRR.';
+  renderAll();
+}
+function toggleMode(){setMode(ddsMode==='auto'?'manual':'auto');}
+function resetDDS(){ROWS.forEach(r=>{ov[r.k]=[null,null,null,null,null];});renderAll();}
+
+function renderDashboard(){
+  const m=cm(A);const f=flows();const{all,fcf}=fcfCalc(f);
+  const allTg=all.map(v=>v*MLN);
+  const NPV=npvC(A.wacc,allTg),IRR=irr(allTg);
+  const bepT=m.fT[2]/(m.ph2y[2]-m.vT[2]/m.vol[2]);
+  let pp=null,cum=allTg[0];
+  fcf.forEach((v,i)=>{cum+=v*MLN;if(cum>=0&&pp===null)pp=i+1+(cum-v*MLN)/(v*MLN)*(-1);});
+  const kpis=[
+    {l:'Мощность',v:fmt(A.mosh),s:'т/год',c:''},
+    {l:'Выручка (2028)',v:fmtM(m.rev[2]),s:'тг/год',c:''},
+    {l:'EBITDA (2028)',v:fmtM(m.eb[2]),s:fmtP(m.eb[2]/m.rev[2]),c:'g'},
+    {l:'Чистая прибыль',v:fmtM(m.np[2]),s:fmtP(m.np[2]/m.rev[2]),c:'g'},
+    {l:'NPV (WACC '+fmtP(A.wacc)+')',v:fmtM(NPV),s:NPV>0?'положительный':'отриц.',c:NPV>0?'g':'r'},
+    {l:'IRR',v:fmtP(IRR),s:'vs WACC '+fmtP(A.wacc),c:IRR>A.wacc?'g':'r'},
+    {l:'Окупаемость',v:pp?pp.toFixed(1)+' лет':'—',s:'простой',c:''},
+    {l:'BEP загрузка',v:fmtP(bepT/A.mosh),s:'запас '+fmtP(1-bepT/A.mosh),c:'a'},
+    {l:'Себестоимость 1 т',v:fmt(Math.round((m.oc[2]+m.am[2])/m.vol[2])),s:'тг/т ($'+fmt(Math.round((m.oc[2]+m.am[2])/m.vol[2]/A.kurs))+')',c:'a'},
+    {l:'CAPEX',v:fmt(A.capex)+' млн',s:'$'+fmt(Math.round(A.capex/A.kurs*1000))+' тыс',c:'w'},
+  ];
+  document.getElementById('kpi-grid').innerHTML=kpis.map(({l,v,s,c})=>`<div class="kc ${c}"><div class="kc-label">${l}</div><div class="kc-val">${v}</div><div class="kc-sub">${s}</div></div>`).join('');
+  mkC('c-rev','bar',{labels:YRS,datasets:[
+    {data:m.rev.map(v=>Math.round(v/MLN)),backgroundColor:'rgba(0,196,224,.8)',borderRadius:3},
+    {data:m.eb.map(v=>Math.round(v/MLN)),backgroundColor:'rgba(29,184,122,.8)',borderRadius:3},
+  ]},{scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}}});
+  const cumA=[];let cs=all[0];fcf.forEach(v=>{cs+=v;cumA.push(Math.round(cs));});
+  mkC('c-cumfcf','bar',{labels:YRS,datasets:[{data:cumA,backgroundColor:cumA.map(v=>v<0?'rgba(232,64,64,.8)':'rgba(29,184,122,.8)'),borderRadius:3}]},
+    {scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}}});
+  const pL=['Сера','Электр.','Вода+хим','ФОТ','Пост.прочие','Аморт.'];
+  const pV=[m.vS[2],m.vE[2],m.vW[2]+m.vT[2]-m.vS[2]-m.vE[2],m.fF[2],m.fT[2]-m.fF[2],m.am[2]].map(v=>Math.round(v/MLN));
+  const pC=['#F5C842','#00C4E0','#1DB87A','#7AC4C4','#4A6280','#304560'];
+  document.getElementById('pie-leg').innerHTML=pL.map((l,i)=>`<span><span class="lsq" style="background:${pC[i]}"></span>${l}</span>`).join('');
+  mkC('c-pie','doughnut',{labels:pL,datasets:[{data:pV,backgroundColor:pC,borderWidth:0}]},{cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.label+': '+c.raw+' млн'}}}});
+  const sV=YRS.map((_,i)=>Math.round(m.vT[i]/m.vol[i])),sF=YRS.map((_,i)=>Math.round(m.fT[i]/m.vol[i])),sA=YRS.map((_,i)=>Math.round(m.am[i]/m.vol[i]));
+  mkC('c-se','bar',{labels:YRS,datasets:[
+    {data:sV,backgroundColor:'rgba(245,200,66,.8)',stack:'s'},
+    {data:sF,backgroundColor:'rgba(0,196,224,.8)',stack:'s'},
+    {data:sA,backgroundColor:'rgba(74,98,128,.8)',stack:'s'},
+  ]},{scales:{x:{stacked:true,ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{stacked:true,ticks:{color:'#4A6280',callback:v=>v+' тг'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+}
+
+function renderPL(){
+  const m=cm(A);
+  const rows=[
+    {l:'Выручка H&#8322;SO&#8324;',v:m.rH2,c:''},
+    {l:'Выручка тепло',v:m.rHt,c:''},
+    {l:'ИТОГО ВЫРУЧКА',v:m.rev,c:'tot'},
+    {l:'',v:null,c:'sh',t:'ЗАТРАТЫ'},
+    {l:'Переменные затраты',v:m.vT.map(x=>-x),c:''},
+    {l:'Постоянные затраты',v:m.fT.map(x=>-x),c:''},
+    {l:'&#9658; EBITDA',v:m.eb,c:'tot'},
+    {l:'EBITDA маржа',v:m.eb.map((_,i)=>m.eb[i]/m.rev[i]),c:'hi',pct:true},
+    {l:'Амортизация',v:m.am.map(x=>-x),c:''},
+    {l:'&#9658; EBIT',v:m.et,c:'tot'},
+    {l:'КПН (20%)',v:m.kp.map(x=>-x),c:''},
+    {l:'&#9658;&#9658; ЧИСТАЯ ПРИБЫЛЬ',v:m.np,c:'tot'},
+    {l:'Рентабельность',v:m.np.map((_,i)=>m.np[i]/m.rev[i]),c:'hi',pct:true},
+    {l:'Себестоимость 1 т',v:YRS.map((_,i)=>(m.oc[i]+m.am[i])/m.vol[i]),c:'hi',tgt:true},
+  ];
+  document.getElementById('pl-table').innerHTML=
+    `<tr><th>Статья</th>${YRS.map(y=>`<th>${y}</th>`).join('')}<th>Итого 5 лет</th></tr>`
+    +rows.map(r=>{
+      if(r.v===null)return`<tr class="sh"><td colspan="${YRS.length+2}">${r.t}</td></tr>`;
+      const cells=r.pct?YRS.map((_,i)=>`<td>${fmtP(r.v[i])}</td>`).join(''):
+        r.tgt?YRS.map((_,i)=>`<td style="color:var(--gold)">${fmtR(r.v[i])} тг/т</td>`).join(''):
+        YRS.map((_,i)=>`<td class="${r.v[i]<-1?'neg':r.v[i]>1?'pos':''}">${fmtM(r.v[i])}</td>`).join('');
+      const tot=r.pct||r.tgt?'<td>—</td>':`<td class="${r.v.reduce((s,v)=>s+v,0)<0?'neg':'pos'}">${fmtM(r.v.reduce((s,v)=>s+v,0))}</td>`;
+      return`<tr class="${r.c}"><td>${r.l}</td>${cells}${tot}</tr>`;
+    }).join('');
+}
+
+function renderDDS(){
+  const m=cm(A),au=autoFlows(m);const f=flows();
+  const{op,iv,fn,fcf,all}=fcfCalc(f);const isM=ddsMode==='manual';
+  const groups=[{id:'op',l:'I. Операционная деятельность'},{id:'inv',l:'II. Инвестиционная деятельность'},{id:'fin',l:'III. Финансовая деятельность'}];
+  const tot={op:YRS.map(()=>0),inv:YRS.map(()=>0),fin:YRS.map(()=>0)};
+  let html=`<tr><th>Статья ДДС</th>${YRS.map(y=>`<th>${y}</th>`).join('')}</tr>`;
+  groups.forEach(g=>{
+    html+=`<tr class="dsec"><td colspan="${YRS.length+1}">${g.l}</td></tr>`;
+    ROWS.filter(r=>r.g===g.id).forEach(r=>{
+      const vals=f[r.k];vals.forEach((v,i)=>tot[g.id][i]+=v);
+      html+=`<tr><td><span>${r.l}</span><span class="hint">${r.h}</span></td>`;
+      YRS.forEach((_,i)=>{
+        const av=au[r.k][i],cv=vals[i],ho=isM&&ov[r.k][i]!==null;
+        if(!isM){const cl=cv<-.01?'neg':cv>.01?'pos':'';html+=`<td><span class="cv ${cl}">${fmtR(Math.round(cv))}</span></td>`;}
+        else{html+=`<td><input class="ni${ho?' ov':''}" type="number" step="any" placeholder="${fmtR(Math.round(av))}" value="${ho?fmtR(ov[r.k][i]):''}" oninput="ov['${r.k}'][${i}]=this.value===''?null:parseFloat(this.value);this.classList.toggle('ov',this.value!=='');renderAll()"></td>`;}
+      });
+      html+=`</tr>`;
+    });
+    html+=`<tr class="dtot"><td>Итого ${g.l.split('.')[1].trim()}</td>`;
+    tot[g.id].forEach(v=>{html+=`<td class="cv ${v<-.01?'neg':v>.01?'pos':''}">${fmtR(Math.round(v))}</td>`;});
+    html+=`</tr>`;
+  });
+  html+=`<tr class="dfcf"><td>&#9658;&#9658; FCF (свободный денежный поток)</td>`;
+  fcf.forEach(v=>{html+=`<td class="cv ${v<-.01?'neg':v>.01?'pos':''}" style="font-size:13px;font-weight:500">${fmtR(Math.round(v))}</td>`;});
+  html+=`</tr>`;
+  let cs=all[0];
+  html+=`<tr class="dcum"><td style="color:var(--text2)">Накопленный FCF</td>`;
+  fcf.forEach(v=>{cs+=v;html+=`<td class="cv ${cs<-.01?'neg':cs>.01?'pos':''}">${fmtR(Math.round(cs))}</td>`;});
+  html+=`</tr>`;
+  document.getElementById('dds-table').innerHTML=html;
+  mkC('c-dds-fcf','bar',{labels:YRS,datasets:[
+    {type:'bar',data:fcf.map(v=>Math.round(v)),backgroundColor:fcf.map(v=>v<0?'rgba(232,64,64,.8)':'rgba(0,196,224,.8)'),borderRadius:3,order:2},
+    {type:'line',data:(()=>{let c=all[0];return fcf.map(v=>{c+=v;return Math.round(c);})})(),borderColor:'#1DB87A',backgroundColor:'rgba(29,184,122,.12)',fill:true,pointBackgroundColor:'#1DB87A',pointRadius:4,order:1},
+  ]},{scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+  const s28=[op[2],iv[2],fn[2]];
+  mkC('c-dds-struct','bar',{labels:['Операц.','Инвест.','Финанс.'],datasets:[{data:s28.map(v=>Math.round(v)),backgroundColor:s28.map(v=>v>=0?'rgba(29,184,122,.8)':'rgba(232,64,64,.8)'),borderRadius:4}]},
+    {scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+}
+
+function renderCFTable(){
+  const f=flows();const{op,iv,fn,fcf,all}=fcfCalc(f);
+  const cumA=[];let cs=all[0];fcf.forEach(v=>{cs+=v;cumA.push(cs);});
+  const aYrs=['2025',...YRS];
+  const rows=[
+    {l:'I. Операционный поток',v:null,c:'sh'},
+    {l:'Поступления от реализации',v:[0,...f.receipts],c:''},
+    {l:'Платежи поставщикам',v:[0,...f.suppliers],c:''},
+    {l:'Выплаты персоналу',v:[0,...f.fot_pay],c:''},
+    {l:'КПН уплаченный',v:[0,...f.kpn_pay],c:''},
+    {l:'Прочие операционные',v:[0,...f.other_op],c:''},
+    {l:'&#9658; Итого операционный',v:[0,...op],c:'tot'},
+    {l:'II. Инвестиционный поток',v:null,c:'sh'},
+    {l:'CAPEX',v:[f._c25,...f.capex_fl],c:''},
+    {l:'Изменение оборотного капитала',v:[0,...f.wc],c:''},
+    {l:'&#9658; Итого инвестиционный',v:[f._c25,...iv],c:'tot'},
+    {l:'III. Финансовый поток',v:null,c:'sh'},
+    {l:'Финансирование получено',v:[0,...f.fin_in],c:''},
+    {l:'Финансирование выплачено',v:[0,...f.fin_out],c:''},
+    {l:'&#9658; Итого финансовый',v:[0,...fn],c:'tot'},
+    {l:'&#9658;&#9658; FCF',v:[all[0],...fcf],c:'tot'},
+    {l:'Накопленный FCF',v:[all[0],...cumA],c:'hi'},
+  ];
+  document.getElementById('cf-table').innerHTML=
+    `<tr><th>Статья</th>${aYrs.map(y=>`<th>${y}</th>`).join('')}</tr>`
+    +rows.map(r=>r.v===null?`<tr class="sh"><td colspan="${aYrs.length+1}">${r.l}</td></tr>`
+      :`<tr class="${r.c}"><td>${r.l}</td>${r.v.map(v=>`<td class="${v<-.01?'neg':v>.01?'pos':''}">${fmtM(v)}</td>`).join('')}</tr>`
+    ).join('');
+}
+
+function renderMetrics(){
+  const m=cm(A);const f=flows();const{all,fcf}=fcfCalc(f);
+  const allTg=all.map(v=>v*MLN);
+  const NPV=npvC(A.wacc,allTg),IRR=irr(allTg),PI=1+NPV/(A.capex*MLN);
+  let pp=null,cum=allTg[0];
+  fcf.forEach((v,i)=>{cum+=v*MLN;if(cum>=0&&pp===null)pp=i+1+(cum-v*MLN)/(v*MLN)*(-1);});
+  const bepT=m.fT[2]/(m.ph2y[2]-m.vT[2]/m.vol[2]);
+  const cmT=m.ph2y[2]-m.vT[2]/m.vol[2];
+  const kpis=[
+    {l:'NPV (WACC '+fmtP(A.wacc)+')',v:fmtM(NPV),s:'тг',c:NPV>0?'g':'r'},
+    {l:'NPV в USD',v:'$'+fmt(Math.round(NPV/MLN/A.kurs*1000))+' тыс',s:'курс '+A.kurs+' тг/$',c:''},
+    {l:'IRR',v:fmtP(IRR),s:'в '+fmt(IRR/A.wacc,1)+'x выше WACC',c:IRR>A.wacc?'g':'r'},
+    {l:'PI',v:PI.toFixed(2)+'×',s:'= 1 + NPV / CAPEX',c:PI>1?'g':'r'},
+    {l:'Срок окупаемости',v:pp?pp.toFixed(1)+' лет':'—',s:'простой',c:''},
+    {l:'BEP (тонн/год)',v:fmt(Math.round(bepT)),s:'мин. для безубыточности',c:'a'},
+    {l:'BEP (% загрузки)',v:fmtP(bepT/A.mosh),s:'запас '+fmtP(1-bepT/A.mosh),c:'a'},
+    {l:'Маржа вклада/т',v:fmt(Math.round(cmT)),s:'тг/т = Цена − Перем/т',c:''},
+  ];
+  document.getElementById('metrics-kpi').innerHTML=kpis.map(({l,v,s,c})=>`<div class="kc ${c}"><div class="kc-label">${l}</div><div class="kc-val" style="font-size:17px">${v}</div><div class="kc-sub">${s}</div></div>`).join('');
+  document.getElementById('fl-list').innerHTML=[
+    ['NPV','Σ FCF_t / (1 + WACC)^t',fmtM(NPV),'g'],
+    ['IRR','r : Σ FCF_t / (1+r)^t = 0',fmtP(IRR),'g'],
+    ['PP','Год когда Σ FCF ≥ 0',pp?pp.toFixed(1)+' лет':'—',''],
+    ['PI','1 + NPV / CAPEX',PI.toFixed(2)+'×','g'],
+    ['EBITDA','Выручка − OPEX_кэш',fmtM(m.eb[2]),'g'],
+    ['BEP','Пост.затр / (Цена − Перем/т)',fmt(Math.round(bepT))+' т','a'],
+  ].map(([n,fo,v,c])=>`<div class="fl-row"><div class="fl-name">${n}</div><div class="fl-formula">${fo}</div><div class="fl-val" style="color:var(--${c==='g'?'green':c==='a'?'gold':'text'})">${v}</div></div>`).join('');
+}
+
+function renderScenarios(){
+  function sc(pm,lp,sm,em){
+    const a={...A,ph2:A.ph2*pm,psera:A.psera*sm,pel:A.pel*em,load:[A.load[0]*.85,A.load[1]*.92,lp,lp,lp]};
+    const m=cm(a);const au=autoFlows(m);
+    const op=YRS.map((_,i)=>au.receipts[i]+au.suppliers[i]+au.fot_pay[i]+au.kpn_pay[i]);
+    const fcf=op.map((_,i)=>op[i]+au.wc[i]);
+    const allT=[-a.capex,...fcf].map(v=>v*MLN);
+    let pp=null,cu=-a.capex*MLN;
+    fcf.forEach((v,i)=>{cu+=v*MLN;if(cu>=0&&pp===null)pp=i+1+(cu-v*MLN)/(v*MLN)*(-1);});
+    return{m,NPV:npvC(A.wacc,allT),IRR:irr(allT),pp};
+  }
+  const stress=sc(.8,.8,1.2,1.15),base=sc(1,1,1,1),opt=sc(1.1,1,.9,.95);
+  const scs=[
+    {d:stress,name:'Стресс',sub:'Цена −20% · загр. 80% · сера +20%',c:'#E84040'},
+    {d:base,  name:'Базовый',sub:'Базовые допущения',c:'#00C4E0'},
+    {d:opt,   name:'Оптимистичный',sub:'Цена +10% · сера −10%',c:'#1DB87A'},
+  ];
+  document.getElementById('sc-grid').innerHTML=scs.map(({d,name,sub,c})=>`
+    <div class="sc-card" style="--sc-c:${c}">
+      <div class="sc-name">${name}</div><div class="sc-sub">${sub}</div>
+      ${[['Выручка (пик)',fmtM(d.m.rev[2])],['EBITDA',fmtM(d.m.eb[2])],
+         ['EBITDA маржа',fmtP(d.m.eb[2]/d.m.rev[2])],['NPV',fmtM(d.NPV)],
+         ['IRR',fmtP(d.IRR)],['Окупаемость',d.pp?d.pp.toFixed(1)+' лет':'—'],
+      ].map(([k,v])=>`<div class="sc-row"><span class="sc-key">${k}</span><span class="sc-val">${v}</span></div>`).join('')}
+    </div>`).join('');
+  mkC('c-sc','bar',{labels:YRS,datasets:[
+    {label:'Стресс',data:stress.m.eb.map(v=>Math.round(v/MLN)),backgroundColor:'rgba(232,64,64,.8)',borderRadius:3},
+    {label:'Базовый',data:base.m.eb.map(v=>Math.round(v/MLN)),backgroundColor:'rgba(0,196,224,.8)',borderRadius:3},
+    {label:'Оптимист.',data:opt.m.eb.map(v=>Math.round(v/MLN)),backgroundColor:'rgba(29,184,122,.8)',borderRadius:3},
+  ]},{scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+  mkC('c-sc-npv','bar',{labels:['Стресс','Базовый','Оптимист.'],datasets:[{data:[stress,base,opt].map(s=>Math.round(s.NPV/MLN)),backgroundColor:['rgba(232,64,64,.8)','rgba(0,196,224,.8)','rgba(29,184,122,.8)'],borderRadius:4}]},
+    {indexAxis:'y',scales:{x:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#8BA4C0'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+}
+
+function renderSensitivity(){
+  const m=cm(A);const bnp=m.np[2];
+  function d(o){const a2={...A,...o};if(o.load)a2.load=[...o.load];return cm(a2).np[2]-bnp;}
+  const factors=[
+    {l:'Цена H&#8322;SO&#8324;',up:d({ph2:A.ph2*1.2}),dn:d({ph2:A.ph2*.8})},
+    {l:'Объём / загрузка',up:d({load:[.6,.96,1,1,1]}),dn:d({load:[.4,.64,.8,.8,.8]})},
+    {l:'Цена серы',up:d({psera:A.psera*.8}),dn:d({psera:A.psera*1.2})},
+    {l:'Тариф эл/э',up:d({pel:A.pel*.8}),dn:d({pel:A.pel*1.2})},
+    {l:'CAPEX',up:d({capex:A.capex*.85}),dn:d({capex:A.capex*1.15})},
+  ].sort((a,b)=>Math.abs(b.up-b.dn)-Math.abs(a.up-a.dn));
+  mkC('c-tornado','bar',{labels:factors.map(f=>f.l),datasets:[
+    {label:'+20%',data:factors.map(f=>Math.round(f.up/MLN)),backgroundColor:'rgba(29,184,122,.85)',borderRadius:3},
+    {label:'-20%',data:factors.map(f=>Math.round(f.dn/MLN)),backgroundColor:'rgba(232,64,64,.85)',borderRadius:3},
+  ]},{indexAxis:'y',scales:{x:{ticks:{color:'#4A6280',callback:v=>(v>0?'+':'')+v+' млн'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#8BA4C0'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.raw>0?'+':'')+c.raw+' млн тг'}}}});
+  const bepT=m.fT[2]/(m.ph2y[2]-m.vT[2]/m.vol[2]);
+  const cmT=m.ph2y[2]-m.vT[2]/m.vol[2];
+  document.getElementById('bep-content').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">${[
+    ['BEP (тонн/год)',fmt(Math.round(bepT)),'т/год'],
+    ['BEP (% загрузки)',fmtP(bepT/A.mosh),'от мощности'],
+    ['Запас прочности',fmtP(1-bepT/A.mosh),'= (V−BEP)/V'],
+    ['Маржа вклада/т',fmt(Math.round(cmT)),'тг/т'],
+  ].map(([l,v,s])=>`<div class="kc a"><div class="kc-label">${l}</div><div class="kc-val" style="font-size:16px">${v}</div><div class="kc-sub">${s}</div></div>`).join('')}</div>`;
+  const loads=[.2,.3,.4,.5,.6,.7,.8,.9,1];
+  const profits=loads.map(l=>{
+    const vol=A.mosh*l,vt=vol*(A.rsera*A.psera+A.rel*A.pel+A.rvoda*A.pvoda+1000),ft=m.fT[2];
+    return Math.max((m.ph2y[2]-vt/vol)*vol-ft,0)/MLN;
+  });
+  mkC('c-bep','line',{labels:loads.map(l=>Math.round(l*100)+'%'),datasets:[{data:profits.map(v=>Math.round(v)),borderColor:'#1DB87A',backgroundColor:'rgba(29,184,122,.1)',fill:true,pointRadius:3,tension:.4}]},
+    {scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+}
+
+function buildInputs(){
+  function sl(l,g,s,min,max,step,suf){
+    const v=g();
+    return`<div class="field"><label>${l}</label><div class="frow"><input type="range" min="${min}" max="${max}" step="${step}" value="${v}" oninput="${s};this.nextElementSibling.textContent=this.value+'${suf}';renderAll()"><span class="fval">${v}${suf}</span></div></div>`;
+  }
+  document.getElementById('inp-macro').innerHTML=
+    sl('Курс USD/тг',()=>A.kurs,`A.kurs=+this.value`,300,800,10,' тг/$')+
+    sl('WACC %',()=>Math.round(A.wacc*100),`A.wacc=+this.value/100`,8,35,1,'%')+
+    sl('Инфляция %',()=>Math.round(A.inf*100),`A.inf=+this.value/100`,3,18,1,'%');
+  document.getElementById('inp-prod').innerHTML=
+    sl('Мощность т/год',()=>A.mosh,`A.mosh=+this.value`,5000,40000,1000,' т')+
+    sl('Загрузка 2026 %',()=>Math.round(A.load[0]*100),`A.load[0]=+this.value/100`,20,100,5,'%')+
+    sl('Загрузка 2027 %',()=>Math.round(A.load[1]*100),`A.load[1]=+this.value/100`,30,100,5,'%')+
+    sl('Загрузка 2028+ %',()=>Math.round(A.load[2]*100),`A.load[2]=A.load[3]=A.load[4]=+this.value/100`,50,100,5,'%');
+  document.getElementById('inp-prices').innerHTML=
+    sl('Цена H&#8322;SO&#8324; тг/т',()=>A.ph2,`A.ph2=+this.value`,80000,250000,5000,' тг')+
+    sl('Цена серы тг/т',()=>A.psera,`A.psera=+this.value`,10000,50000,1000,' тг')+
+    sl('Тариф эл/э тг/кВт·ч',()=>A.pel,`A.pel=+this.value`,15,50,1,' тг')+
+    sl('Индекс цены H&#8322;SO&#8324; %/год',()=>Math.round(A.ih2*100),`A.ih2=+this.value/100`,0,15,1,'%');
+  document.getElementById('inp-costs').innerHTML=
+    sl('CAPEX млн тг',()=>A.capex,`A.capex=+this.value`,500,5000,100,' млн')+
+    sl('Амортизация млн/год',()=>A.amort,`A.amort=+this.value`,50,300,5,' млн')+
+    sl('ФОТ млн/год',()=>A.fot,`A.fot=+this.value`,30,200,5,' млн')+
+    sl('КПН %',()=>Math.round(A.kpn*100),`A.kpn=+this.value/100`,10,30,1,'%');
+}
+
+/* ─────────────────────────────────────────
+   ROADMAP STATE  (persisted in localStorage)
+───────────────────────────────────────── */
+const RM_KEY='sulvara_rm_v2';
+const RM_DEFAULT_PHASES=[
+  {id:'ph0',period:'Q3 2025',title:'Корпоративный старт',tasks:[
+    {id:'t00',name:'Регистрация ТОО',note:'НК РК, МЮ',deadline:'2025-09-01',done:false,priority:'critical',responsible:{name:'Даурен Нысанбеков',phone:'+7 700 000 0001',position:'CEO / Собственник'}},
+    {id:'t01',name:'Банковский счёт',note:'Выбор банка-партнёра',deadline:'2025-09-15',done:false,priority:'high',responsible:{name:'Финансовый директор',phone:'',position:'CFO'}},
+    {id:'t02',name:'Набор команды C-level',note:'CEO, CFO, CTO, Гл. бухгалтер',deadline:'2025-09-30',done:false,priority:'critical',responsible:{name:'Даурен Нысанбеков',phone:'+7 700 000 0001',position:'CEO / Собственник'}},
+    {id:'t03',name:'Договор на земельный участок',note:'8 га, Сузакский р-н',deadline:'2025-09-30',done:false,priority:'high',responsible:{name:'Юрист',phone:'',position:'Юрист проекта'}},
+    {id:'t04',name:'Заказ ПСД (ПИР, проект, смета)',note:'Выбор проектного института',deadline:'2025-10-01',done:false,priority:'high',responsible:{name:'Главный технолог',phone:'',position:'CTO'}},
+  ]},
+  {id:'ph1',period:'Q4 2025',title:'Разрешения и строительство',tasks:[
+    {id:'t10',name:'ОВОС',note:'МЭПР РК, I категория ОПО',deadline:'2025-10-31',done:false,priority:'critical',responsible:{name:'Инженер-эколог',phone:'',position:'Эколог проекта'}},
+    {id:'t11',name:'Контракт с Yangzhou Jintao',note:'$1.6 млн, L/C, штрафные санкции',deadline:'2025-11-15',done:false,priority:'critical',responsible:{name:'Даурен Нысанбеков',phone:'+7 700 000 0001',position:'CEO / Собственник'}},
+    {id:'t12',name:'Начало СМР',note:'Цех, хранилище серы, резервуарный парк',deadline:'2025-11-01',done:false,priority:'high',responsible:{name:'Начальник производства',phone:'',position:'Нач. производства'}},
+    {id:'t13',name:'Экологическая декларация',note:'НДВ SO₂, утверждение МЭПР',deadline:'2025-12-01',done:false,priority:'high',responsible:{name:'Инженер-эколог',phone:'',position:'Эколог проекта'}},
+    {id:'t14',name:'Электроподключение 10 МВт',note:'МРЭК, технические условия',deadline:'2025-12-31',done:false,priority:'medium',responsible:{name:'Главный технолог',phone:'',position:'CTO'}},
+  ]},
+  {id:'ph2',period:'Q1 2026',title:'Монтаж и пуско-наладка',tasks:[
+    {id:'t20',name:'Поставка оборудования',note:'Yangzhou Jintao, морем + ж/д до площадки',deadline:'2026-02-01',done:false,priority:'critical',responsible:{name:'Главный технолог',phone:'',position:'CTO'}},
+    {id:'t21',name:'Монтаж технологической линии',note:'Шеф-монтаж от поставщика',deadline:'2026-03-01',done:false,priority:'critical',responsible:{name:'Начальник производства',phone:'',position:'Нач. производства'}},
+    {id:'t22',name:'ПНР (пуско-наладочные работы)',note:'Выход на 30–50% мощности',deadline:'2026-03-15',done:false,priority:'critical',responsible:{name:'Главный технолог',phone:'',position:'CTO'}},
+    {id:'t23',name:'Приёмка котла-утилизатора',note:'Тест на 50 000 Гкал/год',deadline:'2026-03-31',done:false,priority:'high',responsible:{name:'Инженер КИПиА',phone:'',position:'КИПиА'}},
+  ]},
+  {id:'ph3',period:'Q2 2026',title:'Первое производство',tasks:[
+    {id:'t30',name:'Лицензия ОПО I кат.',note:'ДЧС РК, МЭПР',deadline:'2026-04-15',done:false,priority:'critical',responsible:{name:'Юрист',phone:'',position:'Юрист проекта'}},
+    {id:'t31',name:'Первая партия H₂SO₄',note:'Отгрузка покупателям, QC 92–98%',deadline:'2026-05-01',done:false,priority:'critical',responsible:{name:'Начальник производства',phone:'',position:'Нач. производства'}},
+    {id:'t32',name:'Офтейк-договор с ИНКАЙ',note:'МОУ → полный контракт',deadline:'2026-05-31',done:false,priority:'critical',responsible:{name:'Даурен Нысанбеков',phone:'+7 700 000 0001',position:'CEO / Собственник'}},
+    {id:'t33',name:'Выход на 50% загрузки',note:'10 000 т/год',deadline:'2026-06-30',done:false,priority:'high',responsible:{name:'Начальник производства',phone:'',position:'Нач. производства'}},
+  ]},
+  {id:'ph4',period:'Q3–Q4 2026',title:'Стабилизация операций',tasks:[
+    {id:'t40',name:'Выход на 80% загрузки',note:'16 000 т/год',deadline:'2026-09-30',done:false,priority:'high',responsible:{name:'Начальник производства',phone:'',position:'Нач. производства'}},
+    {id:'t41',name:'Договор на продажу тепла',note:'Теплица / коммунальное теплоснабжение',deadline:'2026-10-31',done:false,priority:'medium',responsible:{name:'Менеджер по снабжению',phone:'',position:'Логистика / Снабжение'}},
+    {id:'t42',name:'Полный набор штата (30 чел.)',note:'Производственный блок',deadline:'2026-10-01',done:false,priority:'medium',responsible:{name:'HR-менеджер',phone:'',position:'HR / Кадры'}},
+    {id:'t43',name:'Первый дивиденд собственнику',note:'По итогам 2026 года',deadline:'2027-03-31',done:false,priority:'low',responsible:{name:'Финансовый директор',phone:'',position:'CFO'}},
+  ]},
+];
+
+function rmLoad(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(RM_KEY)||'null');
+    if(saved&&saved.phases) return saved;
+  }catch(e){}
+  return{phases:JSON.parse(JSON.stringify(RM_DEFAULT_PHASES))};
+}
+function rmSave(state){
+  try{localStorage.setItem(RM_KEY,JSON.stringify(state));}catch(e){}
+}
+function rmState(){
+  if(!window._rmState) window._rmState=rmLoad();
+  return window._rmState;
+}
+function rmPersist(){rmSave(rmState());}
+
+function rmToggleDone(phaseId,taskId){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);
+  if(t){t.done=!t.done;rmPersist();}
+  renderRoadmap();
+}
+function rmUpdateDeadline(phaseId,taskId,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);
+  if(t){t.deadline=val;rmPersist();}
+}
+function rmUpdateNote(phaseId,taskId,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);
+  if(t){t.note=val;rmPersist();}
+}
+function rmUpdateName(phaseId,taskId,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);
+  if(t){t.name=val;rmPersist();}
+}
+function rmDeleteTask(phaseId,taskId){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  ph.tasks=ph.tasks.filter(t=>t.id!==taskId);
+  rmPersist();renderRoadmap();
+}
+function rmUpdatePriority(phaseId,taskId,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);if(t){t.priority=val;rmPersist();}
+  renderRoadmap();
+}
+function rmUpdateResponsible(phaseId,taskId,field,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);if(!ph)return;
+  const t=ph.tasks.find(t=>t.id===taskId);
+  if(t){if(!t.responsible)t.responsible={name:'',phone:'',position:''};t.responsible[field]=val;rmPersist();}
+}
+function rmAddTask(phaseId){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(!ph)return;
+  const newId='t'+Date.now();
+  ph.tasks.push({id:newId,name:'Новая задача',note:'',deadline:'',done:false,priority:'medium',responsible:{name:'',phone:'',position:''}});
+  rmPersist();renderRoadmap();
+  setTimeout(()=>{
+    const el=document.querySelector(`[data-task-name="${newId}"]`);
+    if(el){el.focus();el.select();}
+  },60);
+}
+function rmAddPhase(){
+  const state=rmState();
+  const newId='ph'+Date.now();
+  state.phases.push({id:newId,period:'Новый период',title:'Новая фаза',tasks:[]});
+  rmPersist();renderRoadmap();
+}
+function rmDeletePhase(phaseId){
+  if(!confirm('Удалить эту фазу и все её задачи?'))return;
+  const state=rmState();
+  state.phases=state.phases.filter(p=>p.id!==phaseId);
+  rmPersist();renderRoadmap();
+}
+function rmUpdatePhaseField(phaseId,field,val){
+  const ph=rmState().phases.find(p=>p.id===phaseId);
+  if(ph){ph[field]=val;rmPersist();}
+}
+function rmReset(){
+  if(!confirm('Сбросить дорожную карту к начальным данным? Все отметки и добавленные задачи будут удалены.'))return;
+  window._rmState={phases:JSON.parse(JSON.stringify(RM_DEFAULT_PHASES))};
+  rmPersist();renderRoadmap();
+}
+
+function renderRoadmap(){
+  const state=rmState();
+  const today=new Date();today.setHours(0,0,0,0);
+
+  // Summary stats
+  let totalTasks=0,doneTasks=0,overdueTasks=0,criticalOpen=0,highOpen=0;
+  state.phases.forEach(ph=>{
+    ph.tasks.forEach(t=>{
+      totalTasks++;
+      if(t.done) doneTasks++;
+      else{
+        if(t.deadline&&new Date(t.deadline)<today) overdueTasks++;
+        if(t.priority==='critical') criticalOpen++;
+        else if(t.priority==='high') highOpen++;
+      }
+    });
+  });
+  const pct=totalTasks?Math.round(doneTasks/totalTasks*100):0;
+
+  function deadlineStatus(t){
+    if(t.done) return{label:'Выполнено',cls:'done',color:'var(--green)'};
+    if(!t.deadline) return{label:'Срок не указан',cls:'',color:'var(--text3)'};
+    const dl=new Date(t.deadline);
+    const diff=Math.ceil((dl-today)/(1000*60*60*24));
+    if(diff<0) return{label:'Просрочено на '+(Math.abs(diff))+' дн.',cls:'overdue',color:'var(--red)'};
+    if(diff===0) return{label:'Срок сегодня',cls:'today',color:'var(--gold)'};
+    if(diff<=7) return{label:'Через '+diff+' дн.',cls:'soon',color:'var(--gold)'};
+    return{label:dl.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'}),cls:'',color:'var(--text3)'};
+  }
+
+  let html=`
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="kc" style="padding:10px 16px;min-width:110px">
+        <div class="kc-label">Прогресс</div>
+        <div class="kc-val" style="font-size:22px;color:var(--teal)">${pct}%</div>
+        <div class="kc-sub">${doneTasks} из ${totalTasks} задач</div>
+      </div>
+      <div class="kc ${overdueTasks>0?'r':''}" style="padding:10px 16px;min-width:110px">
+        <div class="kc-label">Просрочено</div>
+        <div class="kc-val" style="font-size:22px;color:${overdueTasks>0?'var(--red)':'var(--green)'}">
+          ${overdueTasks||'0'}
+        </div>
+        <div class="kc-sub">${overdueTasks>0?'требуют внимания':'все в срок'}</div>
+      </div>
+      <div class="kc ${criticalOpen>0?'r':''}" style="padding:10px 16px;min-width:110px">
+        <div class="kc-label">⬆ Критичных</div>
+        <div class="kc-val" style="font-size:22px;color:${criticalOpen>0?'var(--red)':'var(--text3)'}">${criticalOpen}</div>
+        <div class="kc-sub">незакрытых задач</div>
+      </div>
+      <div class="kc" style="padding:10px 16px;min-width:110px">
+        <div class="kc-label">↑ Высоких</div>
+        <div class="kc-val" style="font-size:22px;color:${highOpen>0?'var(--gold)':'var(--text3)'}">${highOpen}</div>
+        <div class="kc-sub">незакрытых задач</div>
+      </div>
+      <div class="kc" style="padding:10px 16px;min-width:110px">
+        <div class="kc-label">Фаз</div>
+        <div class="kc-val" style="font-size:22px">${state.phases.length}</div>
+        <div class="kc-sub">${state.phases.filter(p=>p.tasks.length>0&&p.tasks.every(t=>t.done)).length} завершено</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="background:var(--navy3);border:1px solid var(--border);border-radius:6px;padding:10px 16px;min-width:200px">
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px">ОБЩИЙ ПРОГРЕСС</div>
+        <div style="background:var(--border);border-radius:3px;height:6px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${pct===100?'var(--green)':pct>50?'var(--teal)':'var(--gold)'};border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">${doneTasks}/${totalTasks} задач выполнено</div>
+      </div>
+      <button onclick="rmAddPhase()" style="padding:7px 14px;background:rgba(0,196,224,.1);border:1px solid rgba(0,196,224,.3);border-radius:6px;color:var(--teal);font-size:12px;cursor:pointer;white-space:nowrap">+ Фаза</button>
+      <button onclick="rmReset()" style="padding:7px 10px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text3);font-size:12px;cursor:pointer" title="Сбросить к начальным данным">↺</button>
+    </div>
+  </div>`;
+
+  if(overdueTasks>0){
+    html+=`<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.25);border-radius:6px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="color:var(--red);font-size:16px">⚠</span>
+      <span style="font-size:12px;color:var(--text2)"><b style="color:var(--red)">${overdueTasks} просроченных задач</b> — проверьте сроки и актуализируйте статус. Просроченные критические задачи могут повлиять на срок запуска.</span>
+    </div>`;
+  }
+
+  html+=`<div class="rm-track">`;
+  state.phases.forEach((ph,pi)=>{
+    const phDone=ph.tasks.length>0&&ph.tasks.every(t=>t.done);
+    const phHasDone=ph.tasks.some(t=>t.done);
+    const phOverdue=ph.tasks.filter(t=>!t.done&&t.deadline&&new Date(t.deadline)<today).length;
+    const phProgress=ph.tasks.length?Math.round(ph.tasks.filter(t=>t.done).length/ph.tasks.length*100):0;
+    const dotCls=phDone?'done':phHasDone?'wip':'';
+
+    html+=`<div class="rm-phase" id="rmph-${ph.id}">
+      <div class="rm-dot ${dotCls}">${phProgress}%</div>
+      <div class="rm-head">
+        <input class="rm-inline-inp rm-period-inp" value="${ph.period}" onchange="rmUpdatePhaseField('${ph.id}','period',this.value)" title="Период">
+        <input class="rm-inline-inp rm-title-inp" value="${ph.title}" onchange="rmUpdatePhaseField('${ph.id}','title',this.value)" title="Название фазы">
+        ${phOverdue>0?`<span class="rm-tag overdue">${phOverdue} просрочено</span>`:''}
+        <span class="rm-tag ${phDone?'done':phHasDone?'wip':'plan'}">${phDone?'Завершено':phHasDone?'В работе':'Запланировано'}</span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button onclick="rmAddTask('${ph.id}')" style="padding:3px 10px;background:rgba(0,196,224,.1);border:1px solid rgba(0,196,224,.25);border-radius:4px;color:var(--teal);font-size:11px;cursor:pointer">+ Задача</button>
+          <button onclick="rmDeletePhase('${ph.id}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:11px;cursor:pointer" title="Удалить фазу">✕</button>
+        </div>
+      </div>`;
+
+    if(ph.tasks.length){
+      html+=`<div style="margin-bottom:6px">
+        <div style="background:var(--border);border-radius:2px;height:3px;overflow:hidden">
+          <div style="width:${phProgress}%;height:100%;background:${phProgress===100?'var(--green)':'var(--teal)'};border-radius:2px"></div>
+        </div>
+      </div>`;
+      html+=`<div class="rm-tasks-list">`;
+      ph.tasks.forEach(t=>{
+        const ds=deadlineStatus(t);
+        const isOverdue=!t.done&&t.deadline&&new Date(t.deadline)<today;
+        const pr=t.priority||'medium';
+        const resp=t.responsible||{name:'',phone:'',position:''};
+        const prConf={
+          critical:{label:'Критично',  color:'var(--red)',  bg:'rgba(232,64,64,.12)',  border:'rgba(232,64,64,.3)'},
+          high:    {label:'Высокий',   color:'var(--gold)', bg:'rgba(245,200,66,.1)',  border:'rgba(245,200,66,.3)'},
+          medium:  {label:'Средний',   color:'var(--teal)', bg:'rgba(0,196,224,.08)',  border:'rgba(0,196,224,.25)'},
+          low:     {label:'Низкий',    color:'var(--text3)',bg:'rgba(255,255,255,.04)',border:'var(--border)'},
+        };
+        const pc=prConf[pr]||prConf.medium;
+        html+=`<div class="rm-task-row ${t.done?'task-done':''} ${isOverdue?'task-overdue':''} rm-pr-${pr}" id="rmtask-${t.id}">
+          <label class="rm-checkbox" title="${t.done?'Снять отметку':'Отметить выполненным'}">
+            <input type="checkbox" ${t.done?'checked':''} onchange="rmToggleDone('${ph.id}','${t.id}')">
+            <span class="rm-checkmark"></span>
+          </label>
+          <div class="rm-task-content">
+
+            <div class="rm-task-name-row">
+              <input class="rm-inline-inp rm-name-inp" value="${t.name.replace(/"/g,'&quot;')}" data-task-name="${t.id}"
+                onchange="rmUpdateName('${ph.id}','${t.id}',this.value)" placeholder="Название задачи">
+              <span class="rm-priority-badge" style="color:${pc.color};background:${pc.bg};border:1px solid ${pc.border}">
+                ${pr==='critical'?'⬆ ':pr==='high'?'↑ ':pr==='low'?'↓ ':'→ '}${pc.label}
+              </span>
+              <span class="rm-deadline-badge" style="color:${ds.color}">${ds.label}</span>
+              <button onclick="rmDeleteTask('${ph.id}','${t.id}')" class="rm-del-btn" title="Удалить задачу">✕</button>
+            </div>
+
+            <div class="rm-task-meta-row">
+              <input class="rm-inline-inp rm-note-inp" value="${(t.note||'').replace(/"/g,'&quot;')}"
+                onchange="rmUpdateNote('${ph.id}','${t.id}',this.value)" placeholder="Комментарий...">
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                <label style="font-size:11px;color:var(--text3)">Приоритет:</label>
+                <select class="rm-select" onchange="rmUpdatePriority('${ph.id}','${t.id}',this.value)">
+                  <option value="critical" ${pr==='critical'?'selected':''}>⬆ Критично</option>
+                  <option value="high"     ${pr==='high'?'selected':''}>↑ Высокий</option>
+                  <option value="medium"   ${pr==='medium'?'selected':''}>→ Средний</option>
+                  <option value="low"      ${pr==='low'?'selected':''}>↓ Низкий</option>
+                </select>
+              </div>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);flex-shrink:0">
+                <span>Срок:</span>
+                <input type="date" class="rm-date-inp" value="${t.deadline||''}"
+                  onchange="rmUpdateDeadline('${ph.id}','${t.id}',this.value);renderRoadmap()">
+              </label>
+            </div>
+
+            <div class="rm-responsible-row">
+              <div class="rm-resp-icon">👤</div>
+              <input class="rm-inline-inp rm-resp-name" value="${(resp.name||'').replace(/"/g,'&quot;')}"
+                onchange="rmUpdateResponsible('${ph.id}','${t.id}','name',this.value)"
+                placeholder="ФИО ответственного">
+              <input class="rm-inline-inp rm-resp-pos" value="${(resp.position||'').replace(/"/g,'&quot;')}"
+                onchange="rmUpdateResponsible('${ph.id}','${t.id}','position',this.value)"
+                placeholder="Должность">
+              <a href="tel:${resp.phone||''}" class="rm-resp-phone-link" ${!resp.phone?'style="pointer-events:none"':''}></a>
+              <input class="rm-inline-inp rm-resp-phone" value="${(resp.phone||'').replace(/"/g,'&quot;')}"
+                onchange="rmUpdateResponsible('${ph.id}','${t.id}','phone',this.value)"
+                placeholder="Телефон (+7 700 …)">
+              ${resp.phone?`<a href="tel:${resp.phone}" class="rm-call-btn" title="Позвонить">📞</a>`:''}
+            </div>
+
+          </div>
+        </div>`;
+      });
+      html+=`</div>`;
+    } else {
+      html+=`<div style="padding:12px 0 6px;font-size:12px;color:var(--text3)">Нет задач. <span style="color:var(--teal);cursor:pointer" onclick="rmAddTask('${ph.id}')">Добавить задачу →</span></div>`;
+    }
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+
+  // Export summary
+  html+=`<div style="margin-top:20px;background:var(--navy3);border:1px solid var(--border);border-radius:6px;padding:14px">
+    <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Сводка для экспорта</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">
+      ${state.phases.map(ph=>{
+        const done=ph.tasks.filter(t=>t.done).length;
+        const total=ph.tasks.length;
+        const pct2=total?Math.round(done/total*100):0;
+        const overdue2=ph.tasks.filter(t=>!t.done&&t.deadline&&new Date(t.deadline)<today).length;
+        return`<div style="background:var(--navy4);border-radius:5px;padding:9px 11px">
+          <div style="font-size:10px;color:var(--teal);font-family:var(--mono);margin-bottom:3px">${ph.period}</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:5px">${ph.title}</div>
+          <div style="background:var(--border);border-radius:2px;height:4px;overflow:hidden;margin-bottom:4px">
+            <div style="width:${pct2}%;height:100%;background:${pct2===100?'var(--green)':pct2>50?'var(--teal)':'var(--gold)'};border-radius:2px"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3)">${done}/${total} задач${overdue2>0?` · <span style="color:var(--red)">${overdue2} просрочено</span>`:''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  document.getElementById('roadmap-content').innerHTML=html;
+}
+
+function renderHR(){
+  const blocks=[
+    {name:'Управление',color:'var(--teal)',staff:[
+      {role:'Директор / CEO',qty:1,salary:600000,hire:'Q3 2025',note:'Стратегия, партнёры, банки'},
+      {role:'Финансовый директор (CFO)',qty:1,salary:450000,hire:'Q3 2025',note:'Модель, отчётность, МСФО'},
+      {role:'Главный технолог (CTO)',qty:1,salary:500000,hire:'Q3 2025',note:'Технология, ПНР, шеф-монтаж'},
+    ]},
+    {name:'Технический блок',color:'#7F77DD',staff:[
+      {role:'Начальник производства',qty:1,salary:380000,hire:'Q4 2025',note:'Цех, 2 смены'},
+      {role:'Инженер КИПиА',qty:2,salary:300000,hire:'Q4 2025',note:'АСУ ТП, датчики'},
+      {role:'Слесарь-ремонтник',qty:2,salary:240000,hire:'Q4 2025',note:'ТО оборудования'},
+      {role:'Электрик',qty:1,salary:260000,hire:'Q1 2026',note:'Электросети 10 МВт'},
+    ]},
+    {name:'Производство',color:'var(--green)',staff:[
+      {role:'Аппаратчик (оператор)',qty:4,salary:230000,hire:'Q1 2026',note:'2 смены × 2 оператора'},
+      {role:'Машинист котельного агрегата',qty:2,salary:250000,hire:'Q1 2026',note:'Котёл-утилизатор'},
+      {role:'Машинист насосных установок',qty:2,salary:220000,hire:'Q1 2026',note:'Перекачка H₂SO₄'},
+      {role:'Лаборант-аналитик',qty:2,salary:200000,hire:'Q1 2026',note:'Контроль качества 92-98%'},
+    ]},
+    {name:'Экология и ОТ',color:'var(--gold)',staff:[
+      {role:'Инженер-эколог',qty:1,salary:300000,hire:'Q4 2025',note:'ОВОС, SO₂, МЭПР отчёты'},
+      {role:'Специалист ОТиПБ',qty:1,salary:260000,hire:'Q1 2026',note:'ПБ, I категория ОПО'},
+    ]},
+    {name:'Финансы и администрация',color:'#60A5FA',staff:[
+      {role:'Главный бухгалтер',qty:1,salary:350000,hire:'Q3 2025',note:'НК РК, НДС, КПН, МСФО'},
+      {role:'Бухгалтер',qty:1,salary:220000,hire:'Q3 2025',note:'Первичная документация'},
+      {role:'Юрист',qty:1,salary:280000,hire:'Q3 2025',note:'Договоры, лицензии, корп. право'},
+      {role:'HR-менеджер',qty:1,salary:200000,hire:'Q3 2025',note:'Кадры, делопроизводство'},
+    ]},
+    {name:'Логистика и снабжение',color:'#F97316',staff:[
+      {role:'Менеджер по снабжению',qty:1,salary:270000,hire:'Q3 2025',note:'Сера, химреагенты, ж/д'},
+      {role:'Водитель погрузчика / крановщик',qty:2,salary:190000,hire:'Q1 2026',note:'Склад, погрузка'},
+      {role:'Кладовщик',qty:1,salary:160000,hire:'Q1 2026',note:'ТМЦ, учёт'},
+      {role:'Охранник (2 смены)',qty:4,salary:165000,hire:'Q3 2025',note:'Периметр 8 га, ОПО I кат.'},
+    ]},
+  ];
+  const totalPeople=blocks.reduce((s,b)=>s+b.staff.reduce((ss,r)=>ss+r.qty,0),0);
+  const totalFot=blocks.reduce((s,b)=>s+b.staff.reduce((ss,r)=>ss+r.salary*r.qty*12,0),0);
+  const nrabot=0.115;
+
+  let html=`<div class="hr-summary">
+    ${[
+      ['teal','Численность',totalPeople+' чел.','30 должностей'],
+      ['','ФОТ/год',fmt(Math.round(totalFot/MLN))+' млн тг','без нагрузки раб-ля'],
+      ['','Нагрузка раб-ля',fmt(Math.round(totalFot*nrabot/MLN))+' млн тг','ОПВ+Соц.нал+ОСМС 11.5%'],
+      ['gold','Полная нагрузка',fmt(Math.round(totalFot*(1+nrabot)/MLN))+' млн тг','/год (работодатель)'],
+      ['','ФОТ на 1 тонну',fmt(Math.round(totalFot*(1+nrabot)/20000))+' тг/т','при 100% загрузке'],
+      ['','Найм завершён',`Q1 2026`,'пик — производственный блок'],
+    ].map(([c,l,v,s])=>`<div class="kc ${c}"><div class="kc-label">${l}</div><div class="kc-val" style="font-size:17px">${v}</div><div class="kc-sub">${s}</div></div>`).join('')}
+  </div>`;
+
+  blocks.forEach(bl=>{
+    const blPeople=bl.staff.reduce((s,r)=>s+r.qty,0);
+    const blFot=bl.staff.reduce((s,r)=>s+r.salary*r.qty*12,0);
+    html+=`<div class="hr-block">
+      <div class="hr-block-head">
+        <span class="hr-block-name" style="color:${bl.color}">${bl.name}</span>
+        <span class="hr-block-count">${blPeople} чел. · ${fmt(Math.round(blFot/MLN))} млн тг/год</span>
+      </div>
+      <div class="hr-row header"><div>Должность</div><div>Оклад/мес</div><div>ФОТ/год</div><div>Найм</div></div>
+      ${bl.staff.map(r=>`<div class="hr-row">
+        <div>${r.role}${r.qty>1?` <span style="color:var(--text3)">×${r.qty}</span>`:''}<br><span style="font-size:10px;color:var(--text3)">${r.note}</span></div>
+        <div>${fmt(r.salary)} тг</div>
+        <div>${fmt(r.salary*r.qty*12/MLN,1)} млн</div>
+        <div style="color:${r.hire.includes('2025')?'var(--gold)':'var(--text3)'}">${r.hire}</div>
+      </div>`).join('')}
+    </div>`;
+  });
+
+  // FOT dynamics chart
+  html+=`<div class="cb" style="margin-top:14px">
+    <div class="ct">ФОТ на 1 тонну H₂SO₄ по годам, тг/т</div>
+    <div class="cw"><canvas id="c-hr-fot"></canvas></div>
+  </div>`;
+  document.getElementById('hr-content').innerHTML=html;
+  const mosh=20000,loads=[0.5,0.8,1,1,1];
+  const fotPerTon=loads.map(l=>Math.round(totalFot*(1+nrabot)/(mosh*l)));
+  setTimeout(()=>{
+    mkC('c-hr-fot','bar',{labels:YRS,datasets:[{data:fotPerTon,backgroundColor:'rgba(0,196,224,.7)',borderRadius:4}]},
+      {scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>fmt(v)+' тг/т'},grid:{color:'rgba(255,255,255,.06)'}}},plugins:{legend:{display:false}}});
+  },50);
+}
+
+function renderRisks(){
+  const risks=[
+    {n:1,p:3,i:4,name:'Рост цены серы (ключ. сырьё)',cat:'Сырьевой',mit:'Долгосрочный контракт ИНКАЙ/ТШО; диверсификация; ценовой коридор в договоре',owner:'CFO + Снабжение'},
+    {n:2,p:3,i:5,name:'Падение цены реализации H₂SO₄',cat:'Ценовой',mit:'Офтейк-соглашение с франц. стороной; диверсификация: ИНКАЙ, ЮГХК, Каратау; экспорт',owner:'CEO + Продажи'},
+    {n:3,p:3,i:4,name:'Задержка поставки оборудования',cat:'Логистический',mit:'L/C + штрафные санкции в контракте; резерв 3 мес. в плане; шеф-монтаж по договору',owner:'CTO + Юрист'},
+    {n:4,p:3,i:3,name:'Задержка разрешений и лицензий',cat:'Регуляторный',mit:'Параллельное прохождение ОВОС и ПСД; поддержка акимата; превентивные встречи с ДЧС',owner:'Юрист + CEO'},
+    {n:5,p:2,i:4,name:'Технологический риск (контакт. метод)',cat:'Технологический',mit:'Шеф-монтаж Yangzhou Jintao; пуск с 50% мощности; резерв ПНР 10% от CAPEX',owner:'CTO'},
+    {n:6,p:4,i:3,name:'Рост тарифа электроэнергии',cat:'Операционный',mit:'Турбогенератор (30% самообеспечения); переговоры о льготном тарифе ИЗ «Созак»',owner:'CFO + CTO'},
+    {n:7,p:2,i:5,name:'Экологические нарушения (SO₂)',cat:'Экологический',mit:'Современная газоочистка; НДВ + мониторинг; декларация ПБ; страхование',owner:'Эколог + ОТ'},
+    {n:8,p:3,i:3,name:'Валютный риск (USD/CNY)',cat:'Финансовый',mit:'Курс зафиксирован в модели; резерв курсовой разницы 5% CAPEX; натур. хедж',owner:'CFO'},
+    {n:9,p:3,i:4,name:'Зависимость от Yangzhou Jintao',cat:'Стратегический',mit:'Полная тех. документация; обучение КИПиА-инженеров; контракт на запчасти 2 года',owner:'CTO + CEO'},
+    {n:10,p:3,i:4,name:'Концентрация покупателя',cat:'Коммерческий',mit:'ИНКАЙ, ЮГХК, Каратау, Буденовская; экспорт РФ/КНР; офтейк-диверсификация',owner:'CEO + Продажи'},
+    {n:11,p:2,i:5,name:'Несчастный случай (ОПО I кат.)',cat:'Безопасность',mit:'Инструктажи, СИЗ, ПЛАС; страхование НС; тех. блокировки АСУ ТП',owner:'ОТиПБ'},
+    {n:12,p:1,i:5,name:'Форс-мажор',cat:'Макро',mit:'Страхование имущества; резервный фонд ликвидности 3 мес. OPEX',owner:'CEO'},
+  ];
+  const scoreClass=s=>s>=12?'hi':s>=6?'med':'lo';
+  const scoreColor=s=>s>=12?'var(--red)':s>=6?'var(--gold)':'var(--green)';
+  const cellClass=(p,i)=>{
+    const s=p*i;
+    if(s>=15) return 'hm-x';
+    if(s>=10) return 'hm-5';
+    if(s>=6)  return 'hm-4';
+    if(s>=3)  return 'hm-3';
+    if(s>=2)  return 'hm-2';
+    return 'hm-1';
+  };
+
+  // Build heatmap
+  let hmHtml=`<div class="heatmap">`;
+  hmHtml+=`<div class="hm-label"></div>`;
+  [1,2,3,4,5].forEach(i=>hmHtml+=`<div class="hm-label" style="font-size:9px;color:var(--text3)">${i}<br>Возд.</div>`);
+  for(let p=5;p>=1;p--){
+    hmHtml+=`<div class="hm-label" style="font-size:9px">${p}<br>Вер.</div>`;
+    [1,2,3,4,5].forEach(i=>{
+      const s=p*i;
+      const cls=cellClass(p,i);
+      const risksHere=risks.filter(r=>r.p===p&&r.i===i);
+      const badge=risksHere.length?`<span class="hm-badge">${risksHere.map(r=>r.n).join(',')}</span>`:'';
+      hmHtml+=`<div class="hm-cell ${cls}" title="${risksHere.map(r=>r.name).join('; ')}">${badge||s}</div>`;
+    });
+  }
+  hmHtml+=`</div>`;
+
+  let html=`<div class="risk-grid">
+    <div class="risk-matrix-wrap">
+      <div class="matrix-title">Тепловая карта P × I (Вероятность × Воздействие)</div>
+      ${hmHtml}
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        ${[['var(--green)','Низкий (1-4)'],['var(--gold)','Средний (5-9)'],['var(--red)','Высокий (10+)']].map(([c,l])=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)"><span style="width:10px;height:10px;border-radius:2px;background:${c};opacity:.7;flex-shrink:0"></span>${l}</div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="risk-matrix-wrap" style="margin-bottom:10px">
+        <div class="matrix-title">Топ рисков по оценке</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          ${risks.filter(r=>r.p*r.i>=9).sort((a,b)=>b.p*b.i-a.p*a.i).map(r=>`
+            <div style="background:var(--navy4);border-radius:5px;padding:8px 10px;border-left:3px solid ${scoreColor(r.p*r.i)}">
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">Риск ${r.n} · ${r.cat}</div>
+              <div style="font-size:12px;font-weight:500;margin:3px 0;color:var(--text)">${r.name}</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${scoreColor(r.p*r.i)}">${r.p*r.i}</span>
+                <span style="font-size:10px;color:var(--text3)">${r.p}×${r.i}</span>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Полный реестр рисков с мерами митигации</div>
+  <div class="risk-list">
+    ${risks.map(r=>{
+      const s=r.p*r.i;
+      const sc=scoreClass(s);
+      const clr=scoreColor(s);
+      return`<div class="risk-item">
+        <div class="risk-item-head">
+          <span class="risk-num">${r.n}</span>
+          <span class="risk-name">${r.name}</span>
+          <span style="font-size:10px;color:var(--text3);background:var(--navy4);padding:2px 7px;border-radius:4px;white-space:nowrap">${r.cat}</span>
+          <span class="risk-score ${sc}" style="color:${clr}">${s}</span>
+        </div>
+        <div class="risk-bar"><div class="risk-bar-fill" style="width:${s/25*100}%;background:${clr}"></div></div>
+        <div class="risk-detail" style="margin-top:6px"><span style="color:var(--text3)">P=${r.p} · I=${r.i} · </span><span style="color:var(--text2)">${r.owner}</span></div>
+        <div class="risk-mit">↳ ${r.mit}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+  document.getElementById('risks-content').innerHTML=html;
+}
+
+function renderAll(){
+  renderBar();
+  const active=document.querySelector('.panel.active');if(!active)return;
+  const id=active.id.replace('panel-','');
+  if(id==='dashboard')renderDashboard();
+  if(id==='pl')renderPL();
+  if(id==='dds')renderDDS();
+  if(id==='cashflow')renderCFTable();
+  if(id==='metrics')renderMetrics();
+  if(id==='scenarios')renderScenarios();
+  if(id==='sensitivity')renderSensitivity();
+  if(id==='roadmap')renderRoadmap();
+  if(id==='hr')renderHR();
+  if(id==='risks')renderRisks();
+}
+buildInputs();renderAll();
+</script>
+</body>
+</html>
