@@ -486,7 +486,6 @@ function irr(fl,g=0.5){let r=g;for(let i=0;i<1500;i++){const f=fl.reduce((s,v,t)
 function npvC(rate,fl){return fl.reduce((s,v,t)=>s+v/Math.pow(1+rate,t),0);}
 function fmt(n,d=0){if(isNaN(n)||n===null)return'—';return n.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtM(n){return fmt(Math.round(n/MLN),0)+' млн';}
-function fmtP(n){return(n*100).toFixed(1)+'%';}
 function fmtR(n){return fmt(Math.round(n),0);}
 function mkC(id,type,data,opts={}){
   if(charts[id])charts[id].destroy();
@@ -503,11 +502,18 @@ function getMetrics(){
   fcf.forEach((v,i)=>{cum+=v*MLN;if(cum>=0&&pp===null)pp=i+1+(cum-v*MLN)/(v*MLN)*(-1);});
   return{NPV,IRR,PI,pp};
 }
+function fmtP(n){if(isNaN(n)||n===null||n===undefined||!isFinite(n))return'—';return(n*100).toFixed(1)+'%';}
+
 function renderBar(){
-  const{NPV,IRR}=getMetrics();
-  document.getElementById('tb-irr').textContent=fmtP(IRR);
-  document.getElementById('tb-npv').textContent=fmt(Math.round(NPV/MLN))+' млн';
-  document.getElementById('kurs-badge').textContent=A.kurs;
+  try{
+    const{NPV,IRR}=getMetrics();
+    const irr_el=document.getElementById('tb-irr');
+    const npv_el=document.getElementById('tb-npv');
+    const kb_el=document.getElementById('kurs-badge');
+    if(irr_el) irr_el.textContent=fmtP(IRR);
+    if(npv_el) npv_el.textContent=(isNaN(NPV)||!isFinite(NPV))?'—':fmt(Math.round(NPV/MLN))+' млн';
+    if(kb_el) kb_el.textContent=A.kurs;
+  }catch(e){ console.warn('renderBar:',e); }
 }
 
 function sw(id){
@@ -557,8 +563,15 @@ function renderDashboard(){
   const cumA=[];let cs=all[0];fcf.forEach(v=>{cs+=v;cumA.push(Math.round(cs));});
   mkC('c-cumfcf','bar',{labels:YRS,datasets:[{data:cumA,backgroundColor:cumA.map(v=>v<0?'rgba(232,64,64,.8)':'rgba(29,184,122,.8)'),borderRadius:3}]},
     {scales:{x:{ticks:{color:'#4A6280'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#4A6280',callback:v=>v+' млн'},grid:{color:'rgba(255,255,255,.06)'}}}});
-  const pL=['Сера','Электр.','Вода+хим','ФОТ','Пост.прочие','Аморт.'];
-  const pV=[m.vS[2],m.vE[2],m.vW[2]+m.vT[2]-m.vS[2]-m.vE[2],m.fF[2],m.fT[2]-m.fF[2],m.am[2]].map(v=>Math.round(v/MLN));
+  const pL=['Сера','Электр.','Вода+хим.','ФОТ','Пост.затраты','Аморт.'];
+  const pV=[
+    Math.round(m.vS[2]/MLN),
+    Math.round(m.vE[2]/MLN),
+    Math.round((m.vT[2]-m.vS[2]-m.vE[2])/MLN),
+    Math.round(m.fF[2]/MLN),
+    Math.round((m.fT[2]-m.fF[2])/MLN),
+    Math.round(m.am[2]/MLN)
+  ].map(v=>Math.max(v,0));
   const pC=['#F5C842','#00C4E0','#1DB87A','#7AC4C4','#4A6280','#304560'];
   document.getElementById('pie-leg').innerHTML=pL.map((l,i)=>`<span><span class="lsq" style="background:${pC[i]}"></span>${l}</span>`).join('');
   mkC('c-pie','doughnut',{labels:pL,datasets:[{data:pV,backgroundColor:pC,borderWidth:0}]},{cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.label+': '+c.raw+' млн'}}}});
@@ -1299,21 +1312,44 @@ function renderRisks(){
 }
 
 function renderAll(){
-  renderBar();
+  try{ renderBar(); }catch(e){ console.warn('renderBar:',e); }
   const active=document.querySelector('.panel.active');if(!active)return;
   const id=active.id.replace('panel-','');
-  if(id==='dashboard')renderDashboard();
-  if(id==='pl')renderPL();
-  if(id==='dds')renderDDS();
-  if(id==='cashflow')renderCFTable();
-  if(id==='metrics')renderMetrics();
-  if(id==='scenarios')renderScenarios();
-  if(id==='sensitivity')renderSensitivity();
-  if(id==='roadmap')renderRoadmap();
-  if(id==='hr')renderHR();
-  if(id==='risks')renderRisks();
+  try{
+    if(id==='dashboard')renderDashboard();
+    if(id==='pl')renderPL();
+    if(id==='dds')renderDDS();
+    if(id==='cashflow')renderCFTable();
+    if(id==='metrics')renderMetrics();
+    if(id==='scenarios')renderScenarios();
+    if(id==='sensitivity')renderSensitivity();
+    if(id==='roadmap')renderRoadmap();
+    if(id==='hr')renderHR();
+    if(id==='risks')renderRisks();
+  }catch(e){ console.warn('render error ['+id+']:',e); }
 }
-buildInputs();renderAll();
+buildInputs();
+
+// Guard: run after Chart.js CDN is confirmed loaded
+function boot(){
+  try{ renderBar(); }catch(e){ console.warn('renderBar error:',e); }
+  try{ renderDashboard(); }catch(e){ console.warn('dashboard error:',e); }
+}
+
+if(typeof Chart!=='undefined'){
+  boot();
+} else {
+  // CDN не загрузился за первый рендер — ждём
+  window.addEventListener('load', boot);
+}
+
+// Fallback: если через 300мс шапка всё ещё показывает —, форсируем
+setTimeout(function(){
+  const irr_el=document.getElementById('tb-irr');
+  if(irr_el&&irr_el.textContent==='—'){
+    try{ boot(); }catch(e){}
+  }
+}, 300);
 </script>
 </body>
 </html>
